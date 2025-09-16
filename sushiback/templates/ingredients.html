@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Ингредиенты</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<div class="table-responsive">
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID (Название)</th>
+            <th>Остаток</th>
+            <th>Ед. изм.</th>
+            <th>Цена за ед.</th>
+            <th>Используется в роллах</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ing in ingredients %}
+        <tr>
+            <td>{{ ing.id }} ({{ ing.name }})</td>
+            <td>{{ ing.quantity }}</td>
+            <td>{{ ing.unit }}</td>
+            <td>{{ ing.price_per_unit }}</td>
+            <td>{{ ing.used_in }}</td>
+            <td>
+                <a href="/ingredients/edit/{{ ing.id }}" class="btn btn-warning btn-sm">Редактировать</a>
+                <a href="/ingredients/delete/{{ ing.id }}" class="btn btn-danger btn-sm" onclick="return confirm('Удалить ингредиент?');">Удалить</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<h3>Добавить ингредиент</h3>
+<form method="post">
+    <div class="mb-2">
+        <input type="text" name="name" placeholder="Название" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="quantity" placeholder="Остаток" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="text" name="unit" placeholder="Ед. изм." class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="price_per_unit" placeholder="Цена за ед." class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="text" name="comment" placeholder="Комментарий (необязательно)" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</form>
+{% if edit_ingredient %}
+<h3>Редактировать ингредиент</h3>
+<form method="post" action="/ingredients/edit/{{ edit_ingredient['id'] }}">
+    <div class="mb-2">
+        <input type="text" name="name" value="{{ edit_ingredient['name'] }}" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="quantity" value="{{ edit_ingredient['quantity'] }}" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="text" name="unit" value="{{ edit_ingredient['unit'] }}" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="price_per_unit" value="{{ edit_ingredient['price_per_unit'] }}" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="text" name="comment" placeholder="Комментарий (необязательно)" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-success">Сохранить</button>
+    <a href="/ingredients" class="btn btn-secondary">Отмена</a>
+</form>
+{% endif %}
+{% endblock %} 

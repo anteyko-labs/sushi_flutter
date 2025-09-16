@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Сеты</h2>
+
+<div class="row">
+    {% for set in sets %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">{{ set.name }}</h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-light btn-sm" onclick="editSet({{ set.id }}, '{{ set.name }}', {{ set.cost_price }}, {{ set.retail_price }}, {{ set.set_price }}, {{ set.discount_percent }})">
+                        <i class="bi bi-pencil"></i> Изменить
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="editSetComposition({{ set.id }}, '{{ set.name }}')">
+                        <i class="bi bi-list"></i> Состав
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-muted">Состав:</h6>
+                    <ul class="list-unstyled">
+                        {% for composition in set.composition %}
+                        <li><small class="text-muted">• {{ composition.roll_name }}</small></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <small class="text-muted d-block">Себестоимость</small>
+                            <strong class="text-danger">{{ "%.2f"|format(set.cost_price) }} с</strong>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Розница</small>
+                        <strong class="text-muted text-decoration-line-through">{{ "%.0f"|format(set.retail_price) }} с</strong>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Цена сета</small>
+                        <strong class="text-success fs-5">{{ "%.0f"|format(set.set_price) }} с</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Скидка</small>
+                        <span class="badge bg-warning text-dark">{{ "%.1f"|format(set.discount_percent) }}%</span>
+                    </div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Прибыль</small>
+                        <strong class="text-success">{{ "%.0f"|format(set.gross_profit) }} с</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Маржа</small>
+                        <strong class="text-info">{{ "%.1f"|format(set.margin_percent) }}%</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-grid">
+                    <button class="btn btn-outline-primary btn-sm" onclick="addSetToOrder({{ set.id }}, '{{ set.name }}', {{ set.set_price }})">
+                        Добавить в заказ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно для добавления сета в заказ -->
+<div class="modal fade" id="addSetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить сет в заказ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSetForm" method="post" action="/orders/add_set">
+                    <input type="hidden" id="setId" name="set_id">
+                    <input type="hidden" id="setName" name="set_name">
+                    <input type="hidden" id="setPrice" name="set_price">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Сет:</label>
+                        <input type="text" id="setNameDisplay" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Количество:</label>
+                        <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Цена за единицу:</label>
+                        <input type="text" id="setPriceDisplay" class="form-control" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Комментарий:</label>
+                        <textarea name="comment" class="form-control" rows="2" placeholder="Комментарий к заказу (необязательно)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="addSetForm" class="btn btn-primary">Добавить в заказ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования сета -->
+<div class="modal fade" id="editSetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать сет</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editSetForm" method="post" action="/sets/edit">
+                    <input type="hidden" id="editSetId" name="set_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Название сета:</label>
+                        <input type="text" id="editSetName" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Себестоимость (с):</label>
+                                <input type="number" id="editSetCostPrice" name="cost_price" step="0.01" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Розничная цена (с):</label>
+                                <input type="number" id="editSetRetailPrice" name="retail_price" step="0.01" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Цена сета (с):</label>
+                                <input type="number" id="editSetSetPrice" name="set_price" step="0.01" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Скидка (%):</label>
+                                <input type="number" id="editSetDiscount" name="discount_percent" step="0.1" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Прибыль:</strong> <span id="editSetProfit">0</span> с<br>
+                            <strong>Маржа:</strong> <span id="editSetMargin">0</span>%
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="editSetForm" class="btn btn-primary">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования состава сета -->
+<div class="modal fade" id="editCompositionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать состав сета: <span id="compositionSetName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCompositionForm" method="post" action="/sets/edit_composition">
+                    <input type="hidden" id="compositionSetId" name="set_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Текущий состав:</label>
+                        <div id="currentComposition" class="border rounded p-3 bg-light">
+                            <!-- Текущий состав будет загружен динамически -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Добавить ролл в сет:</label>
+                        <div class="input-group">
+                            <select id="rollSelect" class="form-select">
+                                <option value="">Выберите ролл...</option>
+                                {% for roll in rolls %}
+                                <option value="{{ roll.id }}">{{ roll.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="addRollToSet()">Добавить</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Новый состав:</label>
+                        <div id="newComposition" class="border rounded p-3 bg-light">
+                            <!-- Новый состав будет формироваться здесь -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" form="editCompositionForm" class="btn btn-primary">Сохранить состав</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addSetToOrder(setId, setName, setPrice) {
+    document.getElementById('setId').value = setId;
+    document.getElementById('setName').value = setName;
+    document.getElementById('setNameDisplay').value = setName;
+    document.getElementById('setPrice').value = setPrice;
+    document.getElementById('setPriceDisplay').value = setPrice + ' с';
+    
+    const modal = new bootstrap.Modal(document.getElementById('addSetModal'));
+    modal.show();
+}
+
+function editSet(setId, setName, costPrice, retailPrice, setPrice, discount) {
+    document.getElementById('editSetId').value = setId;
+    document.getElementById('editSetName').value = setName;
+    document.getElementById('editSetCostPrice').value = costPrice;
+    document.getElementById('editSetRetailPrice').value = retailPrice;
+    document.getElementById('editSetSetPrice').value = setPrice;
+    document.getElementById('editSetDiscount').value = discount;
+    
+    updateProfitAndMargin();
+    
+    const modal = new bootstrap.Modal(document.getElementById('editSetModal'));
+    modal.show();
+}
+
+function editSetComposition(setId, setName) {
+    document.getElementById('compositionSetId').value = setId;
+    document.getElementById('compositionSetName').textContent = setName;
+    
+    // Загрузить текущий состав
+    loadCurrentComposition(setId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('editCompositionModal'));
+    modal.show();
+}
+
+function updateProfitAndMargin() {
+    const costPrice = parseFloat(document.getElementById('editSetCostPrice').value) || 0;
+    const setPrice = parseFloat(document.getElementById('editSetSetPrice').value) || 0;
+    
+    const profit = setPrice - costPrice;
+    const margin = costPrice > 0 ? (profit / costPrice) * 100 : 0;
+    
+    document.getElementById('editSetProfit').textContent = profit.toFixed(0);
+    document.getElementById('editSetMargin').textContent = margin.toFixed(1);
+}
+
+// Обновлять прибыль и маржу при изменении цен
+document.getElementById('editSetCostPrice').addEventListener('input', updateProfitAndMargin);
+document.getElementById('editSetSetPrice').addEventListener('input', updateProfitAndMargin);
+
+function loadCurrentComposition(setId) {
+    // Загружаем текущий состав через AJAX
+    fetch(`/sets/${setId}/composition`)
+        .then(response => response.json())
+        .then(composition => {
+            const currentComposition = document.getElementById('currentComposition');
+            const newComposition = document.getElementById('newComposition');
+            
+            if (composition.length === 0) {
+                currentComposition.innerHTML = '<p class="text-muted">Сет пустой</p>';
+            } else {
+                let html = '';
+                composition.forEach(item => {
+                    html += `
+                        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                            <span>${item.roll_name}</span>
+                            <input type="hidden" name="roll_ids[]" value="${item.roll_id}">
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                currentComposition.innerHTML = html;
+                newComposition.innerHTML = html; // Копируем текущий состав в новый
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки состава:', error);
+            document.getElementById('currentComposition').innerHTML = '<p class="text-danger">Ошибка загрузки</p>';
+        });
+}
+
+function addRollToSet() {
+    const rollSelect = document.getElementById('rollSelect');
+    const rollId = rollSelect.value;
+    const rollName = rollSelect.options[rollSelect.selectedIndex].text;
+    
+    if (!rollId) return;
+    
+    const newComposition = document.getElementById('newComposition');
+    const rollDiv = document.createElement('div');
+    rollDiv.className = 'd-flex justify-content-between align-items-center mb-2 p-2 border rounded';
+    rollDiv.innerHTML = `
+        <span>${rollName}</span>
+        <input type="hidden" name="roll_ids[]" value="${rollId}">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.parentElement.remove()">
+            <i class="bi bi-trash"></i>
+        </button>
+    `;
+    
+    newComposition.appendChild(rollDiv);
+    rollSelect.value = '';
+}
+</script>
+{% endblock %}

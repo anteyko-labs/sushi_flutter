@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Аналитика</h2>
+<form method="get" class="mb-3">
+    <div class="row">
+        <div class="col-md-2">
+            <label>С:</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+        <div class="col-md-2">
+            <label>По:</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+    </div>
+</form>
+<div class="mb-4">
+    {{ sales_bar_html|safe }}
+</div>
+<div class="mb-4">
+    {{ profit_bar_html|safe }}
+</div>
+{% endblock %} 

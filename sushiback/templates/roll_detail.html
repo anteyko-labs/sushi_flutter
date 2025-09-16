@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ roll_name }}</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<h4>Себестоимость ролла: {{ total_cost }} руб.</h4>
+<div class="table-responsive">
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID (Ингредиент)</th>
+            <th>На 1 ролл</th>
+            <th>Ед. изм.</th>
+            <th>Остаток на складе</th>
+            <th>Цена за ед.</th>
+            <th>Стоимость в ролле</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ing in ingredients %}
+        <tr>
+            <td>{{ ing.id }} ({{ ing.name }})</td>
+            <td>{{ ing.used }}</td>
+            <td>{{ ing.unit }}</td>
+            <td>{{ ing.on_stock }}</td>
+            <td>{{ ing.price_per_unit }}</td>
+            <td>{{ ing.cost }}</td>
+            <td>
+                <a href="/rolls/{{ roll_id }}/edit_ingredient/{{ ing.id|int }}" class="btn btn-warning btn-sm">Редактировать</a>
+                <a href="/rolls/{{ roll_id }}/delete_ingredient/{{ ing.id|int }}" class="btn btn-danger btn-sm" onclick="return confirm('Удалить ингредиент из рецепта?');">Удалить</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<h4>Добавить ингредиент в рецепт</h4>
+<form method="post">
+    <div class="row mb-2">
+        <div class="col-md-6">
+            <select name="ingredient_id" class="form-control" required>
+                <option value="">Выберите ингредиент</option>
+                {% for ing in available_ingredients %}
+                    <option value="{{ ing.id }}">{{ ing.id }} ({{ ing.name }}) ({{ ing.unit }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input type="number" step="0.001" name="amount_per_roll" placeholder="Сколько на 1 ролл" class="form-control" required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary">Добавить</button>
+        </div>
+    </div>
+</form>
+<a href="/rolls" class="btn btn-secondary">Назад к списку роллов</a>
+{% endblock %} 

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="theme-color" content="#e0f7fa">
+  <link rel="manifest" href="/client_pwa/manifest.json">
+  <link rel="icon" href="/client_pwa/image.png">
+  <title>Суши-бар | Меню</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8fbfd; }
+    .category-card, .roll-card { box-shadow: 0 2px 12px #00bcd433; border-radius: 18px; transition: box-shadow .2s, transform .2s; background: #fff; cursor: pointer; }
+    .category-card:hover, .roll-card:hover { box-shadow: 0 4px 24px #00bcd455; transform: translateY(-2px) scale(1.02); }
+    .category-img, .roll-img { width: 100%; height: 160px; object-fit: cover; border-radius: 18px 18px 0 0; background: #e0f7fa; }
+    .category-title { font-size: 1.2em; font-weight: 600; color: #007c91; text-align: center; margin: 12px 0 8px 0; }
+    .search-bar { border-radius: 12px; border: 1px solid #e0f7fa; padding: 8px 16px; margin-bottom: 18px; max-width: 400px; }
+    .back-btn { border: none; background: none; color: #00bcd4; font-weight: 600; font-size: 1.1rem; margin-bottom: 18px; display: flex; align-items: center; cursor: pointer; }
+    .back-btn i { font-size: 1.3em; margin-right: 6px; }
+    .weight { color: #888; font-size: 0.95em; }
+    .price { color: #00bcd4; font-weight: bold; font-size: 1.1em; }
+    .footer { background: #e0f7fa; color: #007c91; padding: 24px 0 12px 0; text-align: center; border-radius: 18px 18px 0 0; margin-top: 48px; }
+    .cart-btn { position: fixed; bottom: 24px; right: 24px; z-index: 1000; box-shadow: 0 2px 8px #00bcd433; }
+    .cart-btn .badge { background: #fff; color: #00bcd4; }
+    .modal-header { border-bottom: none; }
+    .modal-footer { border-top: none; }
+    @media (max-width: 600px) {
+      .category-img, .roll-img { height: 100px; }
+      .footer { font-size: 0.95em; }
+    }
+    .roll-card .card-body { padding: 18px 18px 14px 18px; }
+    .roll-card .card-title { margin-bottom: 6px; }
+    .roll-card .weight { margin-bottom: 4px; }
+    .roll-card .mb-2.text-muted { margin-bottom: 10px !important; }
+    .roll-card .btn-outline-info { border-radius: 10px; padding: 4px 14px; margin-right: 2px; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark mb-2" style="background: #00bcd4;">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#sideMenu" aria-controls="sideMenu" aria-label="Меню">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand ms-2" href="#" onclick="goHome()">Суши-бар</a>
+  </div>
+</nav>
+<!-- Offcanvas меню -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="sideMenu" aria-labelledby="sideMenuLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="sideMenuLabel">Меню</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+  </div>
+  <div class="offcanvas-body">
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item list-group-item-action" onclick="goHome(); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Главная</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('classic'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Классические роллы</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('baked'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Тёплые роллы</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('sushi'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Суши</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('vegan'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Вегетарианские</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('dessert'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Десерты</li>
+      <li class="list-group-item list-group-item-action" onclick="renderCategory('sauces'); bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('sideMenu')).hide();">Соусы</li>
+    </ul>
+  </div>
+</div>
+<div class="container py-3">
+  <div class="d-flex align-items-center mb-3">
+    <input type="text" class="form-control search-bar" id="searchInput" placeholder="Поиск по меню..." oninput="onSearch()">
+  </div>
+  <div id="main-content"></div>
+</div>
+<button class="btn btn-info rounded-pill cart-btn" onclick="openCart()">
+  <span class="me-2">Корзина</span>
+  <span class="badge" id="cart-count">0</span>
+</button>
+<!-- Корзина (модальное окно) -->
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ваша корзина</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body" id="cart-items"></div>
+      <div class="modal-footer">
+        <div class="w-100 mb-2 text-end fw-bold">Итого: <span id="cart-total">0</span> сом</div>
+        <form id="order-form" class="w-100">
+          <input type="text" class="form-control mb-2" id="order-name" placeholder="Ваше имя" required>
+          <input type="tel" class="form-control mb-2" id="order-phone" placeholder="Телефон" required pattern="[0-9\-\+\s\(\)]{7,}">
+          <button type="submit" class="btn btn-info w-100">Оформить заказ</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Модалка состава ролла -->
+<div class="modal fade" id="rollModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="rollModalTitle"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body" id="rollModalBody"></div>
+    </div>
+  </div>
+</div>
+<footer class="footer mt-5">
+  <div>© 2024 Суши-бар. Все права защищены.<br>г. Бишкек, ул. Примерная, 1 | +996 555 123 456</div>
+</footer>
+<script>
+let categories = [];
+let rolls = [];
+let currentCategory = null;
+
+function goHome() {
+  currentCategory = null;
+  document.getElementById('searchInput').value = '';
+  renderMain();
+}
+function onSearch() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  if (query.length === 0) {
+    if (currentCategory) renderCategory(currentCategory);
+    else renderMain();
+    return;
+  }
+  // Поиск по всем роллам
+  const filtered = rolls.filter(r => r.name.toLowerCase().includes(query) || (r.ingredients && r.ingredients.toLowerCase().includes(query)));
+  renderRollsGrid(filtered, 'Результаты поиска');
+}
+function renderMain() {
+  const main = document.getElementById('main-content');
+  let html = '<h2 class="mb-4">Меню</h2><div class="row">';
+  categories.forEach(cat => {
+    html += `<div class="col-12 col-sm-6 col-md-4 col-lg-4 mb-4">
+      <div class="category-card h-100" onclick="renderCategory('${cat.id}')">
+        <img src="/client_pwa/image.png" class="category-img" alt="${cat.name}">
+        <div class="category-title">${cat.name}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  main.innerHTML = html;
+}
+function renderCategory(catId) {
+  currentCategory = catId;
+  document.getElementById('searchInput').value = '';
+  const filtered = rolls.filter(r => r.category === catId);
+  const cat = categories.find(c => c.id === catId);
+  renderRollsGrid(filtered, cat ? cat.name : '');
+}
+function renderRollsGrid(rollsArr, title) {
+  const main = document.getElementById('main-content');
+  let html = `<button class="back-btn" onclick="goHome()"><i class="bi bi-arrow-left"></i>Назад</button>`;
+  html += `<h2 class="mb-4">${title}</h2><div class="row">`;
+  if (rollsArr.length === 0) {
+    html += '<div class="text-center text-muted py-5">Нет роллов в этой категории</div>';
+  } else {
+    rollsArr.forEach(roll => {
+      const imgSrc = roll.image || 'image.png';
+      html += `<div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+        <div class="roll-card h-100" onclick="showRollModal(${roll.id})">
+          <img src="${imgSrc}" class="roll-img" alt="${roll.name}">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">${roll.name}</h5>
+            <div class="weight mb-1">${roll.weight} г</div>
+            <div class="mb-2 text-muted small">${roll.ingredients}</div>
+            <div class="d-flex justify-content-between align-items-center mt-auto">
+              <span class="price">${roll.price} сом</span>
+              <button class="btn btn-outline-info btn-sm" onclick="event.stopPropagation(); addToCart(${roll.id})">+</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  main.innerHTML = html;
+}
+function showRollModal(id) {
+  const roll = rolls.find(r => r.id === id);
+  const imgSrc = roll.image || 'image.png';
+  document.getElementById('rollModalTitle').textContent = roll.name;
+  document.getElementById('rollModalBody').innerHTML = `
+    <img src="${imgSrc}" class="roll-img mb-3" alt="${roll.name}">
+    <div class="mb-2"><b>Состав:</b> ${roll.ingredients}</div>
+    <div class="mb-2"><b>Вес:</b> ${roll.weight} г</div>
+    <div class="mb-2"><b>Цена:</b> ${roll.price} сом</div>
+    <button class="btn btn-info w-100" onclick="addToCart(${roll.id}); bootstrap.Modal.getInstance(document.getElementById('rollModal')).hide();">Добавить в корзину</button>
+  `;
+  new bootstrap.Modal(document.getElementById('rollModal')).show();
+}
+function getCart() {
+  return JSON.parse(localStorage.getItem('cart') || '[]');
+}
+function setCart(cart) {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  document.getElementById('cart-count').textContent = cart.length;
+}
+function addToCart(id) {
+  const cart = getCart();
+  cart.push(id);
+  setCart(cart);
+}
+function openCart() {
+  const cart = getCart();
+  const items = cart.map(id => rolls.find(r => r.id === id));
+  let html = '';
+  let total = 0;
+  if (items.length === 0) html = '<p>Корзина пуста</p>';
+  else {
+    const counts = {};
+    items.forEach(r => { counts[r.id] = (counts[r.id] || 0) + 1; });
+    html = Object.keys(counts).map(id => {
+      const roll = rolls.find(r => r.id == id);
+      const sum = roll.price * counts[id];
+      total += sum;
+      return `<div class='d-flex justify-content-between align-items-center mb-2'>
+        <span>${roll.name} × ${counts[id]}</span>
+        <span>${sum} сом</span>
+        <div>
+          <button class='btn btn-sm btn-outline-info me-1' onclick='changeCart(${roll.id}, -1)'>&minus;</button>
+          <button class='btn btn-sm btn-outline-danger' onclick='removeFromCart(${roll.id})'>&times;</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('cart-items').innerHTML = html;
+  document.getElementById('cart-total').textContent = total;
+  new bootstrap.Modal(document.getElementById('cartModal')).show();
+}
+function changeCart(id, delta) {
+  let cart = getCart();
+  const idx = cart.indexOf(id);
+  if (delta === -1 && idx !== -1) cart.splice(idx, 1);
+  if (delta === 1) cart.push(id);
+  setCart(cart);
+  openCart();
+}
+function removeFromCart(id) {
+  let cart = getCart();
+  cart = cart.filter(cid => cid !== id);
+  setCart(cart);
+  openCart();
+}
+document.getElementById('order-form').onsubmit = function(e) {
+  e.preventDefault();
+  const name = document.getElementById('order-name').value.trim();
+  const phone = document.getElementById('order-phone').value.trim();
+  const cart = getCart();
+  if (!name || !phone || cart.length === 0) return;
+  showThankYou();
+  setCart([]);
+  document.getElementById('order-form').reset();
+  bootstrap.Modal.getInstance(document.getElementById('cartModal')).hide();
+};
+function showThankYou() {
+  document.getElementById('main-content').innerHTML = `
+    <div class='text-center py-5'>
+      <h2 class='mb-4'>Спасибо за заказ!</h2>
+      <div class='mb-3'>Мы свяжемся с вами для подтверждения.<br>Ожидайте звонка.</div>
+      <button class='btn btn-info mt-3' onclick='goHome()'>Вернуться в меню</button>
+    </div>
+  `;
+}
+// --- Загрузка меню из API ---
+async function loadMenu() {
+  try {
+    const resp = await fetch('/api/menu');
+    const data = await resp.json();
+    categories = data.categories;
+    rolls = data.rolls;
+    goHome();
+  } catch (e) {
+    document.getElementById('main-content').innerHTML = `<div class='text-center text-danger py-5'>Ошибка загрузки меню :(</div>`;
+  }
+}
+window.onload = function() {
+  loadMenu();
+  setCart(getCart());
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/client_pwa/sw.js');
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</body>
+</html> 

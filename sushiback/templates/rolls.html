@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Роллы</h2>
+<a href="/rolls/add" class="btn btn-success mb-3">Добавить ролл с составом</a>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<div class="table-responsive">
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Название</th>
+            <th>Продажная цена</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for roll in rolls %}
+        <tr>
+            <td>{{ roll['name'] }}</td>
+            <td>{{ roll['sale_price'] if 'sale_price' in roll else '' }}</td>
+            <td>
+                <a href="/rolls/{{ roll['id'] }}" class="btn btn-info btn-sm">Подробнее</a>
+                <a href="/rolls/edit/{{ roll['id'] }}" class="btn btn-warning btn-sm">Редактировать</a>
+                <a href="/rolls/delete/{{ roll['id'] }}" class="btn btn-danger btn-sm" onclick="return confirm('Удалить ролл?');">Удалить</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+<h3>Добавить ролл (только название и цена)</h3>
+<form method="post">
+    <div class="mb-2">
+        <input type="text" name="name" placeholder="Название ролла" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="sale_price" placeholder="Продажная цена (необязательно)" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Добавить</button>
+</form>
+{% if edit_roll %}
+<h3>Редактировать ролл</h3>
+<form method="post" action="/rolls/edit/{{ edit_roll['id'] }}">
+    <div class="mb-2">
+        <input type="text" name="name" value="{{ edit_roll['name'] }}" class="form-control" required>
+    </div>
+    <div class="mb-2">
+        <input type="number" step="0.01" name="sale_price" value="{{ edit_roll['sale_price'] }}" class="form-control" placeholder="Продажная цена">
+    </div>
+    <button type="submit" class="btn btn-success">Сохранить</button>
+    <a href="/rolls" class="btn btn-secondary">Отмена</a>
+</form>
+{% endif %}
+{% endblock %} 

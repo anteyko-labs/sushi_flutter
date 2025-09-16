@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Заказы</h2>
+<div class="table-responsive">
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Дата/время</th>
+            <th>Позиция</th>
+            <th>Количество</th>
+            <th>Стоимость за 1 ед.</th>
+            <th>Сумма</th>
+            <th>Комментарий</th>
+            <th>Статус</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in orders %}
+        <tr>
+            <td>{{ order['order_time'] }}</td>
+            <td>
+                {% if order['order_type'] == 'set' %}
+                    <span class="badge bg-info me-2">Сет</span>
+                {% else %}
+                    <span class="badge bg-secondary me-2">Ролл</span>
+                {% endif %}
+                {{ order['item_name'] }}
+            </td>
+            <td>{{ order['quantity'] }}</td>
+            <td>{{ order['cost_per_roll'] }}</td>
+            <td>{{ order['total_price'] }}</td>
+            <td>{{ order['comment'] }}</td>
+            <td>
+                <span class="badge 
+                    {% if order['status'] == 'Принят' %}bg-secondary
+                    {% elif order['status'] == 'Готовится' %}bg-warning
+                    {% elif order['status'] == 'Готов' %}bg-info
+                    {% elif order['status'] == 'Отправлен' %}bg-primary
+                    {% elif order['status'] == 'Доставлен' %}bg-success
+                    {% else %}bg-secondary{% endif %}">
+                    {{ order['status'] }}
+                </span>
+            </td>
+            <td>
+                {% if session.role == 'chef' %}
+                    {% if order['status'] == 'Принят' %}
+                        <button class="btn btn-warning btn-sm" onclick="changeStatus({{ order['id'] }}, 'Готовится')">
+                            Перевести в "Готовится"
+                        </button>
+                    {% elif order['status'] == 'Готовится' %}
+                        <button class="btn btn-info btn-sm" onclick="changeStatus({{ order['id'] }}, 'Готов')">
+                            Перевести в "Готов"
+                        </button>
+                    {% elif order['status'] == 'Готов' %}
+                        <button class="btn btn-primary btn-sm" onclick="changeStatus({{ order['id'] }}, 'Отправлен')">
+                            Перевести в "Отправлен"
+                        </button>
+                    {% elif order['status'] == 'Отправлен' %}
+                        <button class="btn btn-success btn-sm" onclick="changeStatus({{ order['id'] }}, 'Доставлен')">
+                            Перевести в "Доставлен"
+                        </button>
+                    {% elif order['status'] == 'Доставлен' %}
+                        <span class="text-muted">Заказ завершен</span>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm" onclick="changeStatus({{ order['id'] }}, 'Принят')">
+                            Установить "Принят"
+                        </button>
+                    {% endif %}
+                {% else %}
+                    {% if order['status'] == 'Готовится' %}
+                        <a href="/orders/done/{{ order['id'] }}" class="btn btn-success btn-sm">Сделан</a>
+                    {% else %}
+                        —
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<h3>Добавить заказ</h3>
+<div class="row">
+    <div class="col-md-6">
+        <h5>Добавить ролл</h5>
+        <form method="post">
+            <div class="mb-2">
+                <select name="roll_id" class="form-control" required>
+                    <option value="">Выберите ролл</option>
+                    {% for roll in rolls %}
+                        <option value="{{ roll['id'] }}">{{ roll['name'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-2">
+                <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+            </div>
+            <div class="mb-2">
+                <input type="text" name="comment" placeholder="Комментарий к заказу (необязательно)" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Добавить ролл</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <h5>Добавить сет</h5>
+        <form method="post" action="/orders/add_set">
+            <div class="mb-2">
+                <select name="set_id" class="form-control" required>
+                    <option value="">Выберите сет</option>
+                    {% for set in sets %}
+                        <option value="{{ set['id'] }}" data-price="{{ set['set_price'] }}">{{ set['name'] }} - {{ set['set_price'] }}с</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-2">
+                <input type="number" name="quantity" min="1" value="1" class="form-control" placeholder="Количество" required>
+            </div>
+            <div class="mb-2">
+                <input type="text" name="comment" placeholder="Комментарий к заказу (необязательно)" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Добавить сет</button>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger mt-2">{{ error }}</div>
+{% endif %}
+
+<script>
+function changeStatus(orderId, newStatus) {
+    if (confirm(`Перевести заказ #${orderId} в статус "${newStatus}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/orders/change_status/${orderId}`;
+        
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = newStatus;
+        
+        form.appendChild(statusInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %} 

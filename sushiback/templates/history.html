@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>История изменений</h2>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Действие</th>
+            <th>Объект</th>
+            <th>Название</th>
+            <th>Детали</th>
+            <th>Роль</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in history %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.action }}</td>
+            <td>{{ row.object_type }}</td>
+            <td>{{ row.object_name }}</td>
+            <td>{{ row.details }}</td>
+            <td>{{ row.role }}</td>
+            <td>{{ row.comment }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% if not history %}
+<div class="alert alert-info">История изменений пуста.</div>
+{% endif %}
+{% endblock %} 

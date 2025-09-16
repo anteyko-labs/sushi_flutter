@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Вход</h2>
+<form method="post" class="mt-4" style="max-width:400px;">
+    <div class="mb-3">
+        <label for="role">Выберите роль:</label>
+        <select name="role" id="role" class="form-control" required>
+            <option value="chef">Шеф-повар</option>
+            <option value="staff">Сотрудник</option>
+            <option value="accountant">Бухгалтер</option>
+            <option value="owner">Владелец</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="password">Пароль:</label>
+        <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Войти</button>
+</form>
+{% endblock %} 

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Бухгалтерия</h2>
+<form method="get" class="mb-3">
+    <div class="row">
+        <div class="col-md-2">
+            <label>С:</label>
+            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+        </div>
+        <div class="col-md-2">
+            <label>По:</label>
+            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+        </div>
+        <div class="col-md-2">
+            <label>Ролл:</label>
+            <select name="roll_id" class="form-control">
+                <option value="">Все</option>
+                {% for rid, roll in rolls.items() %}
+                    <option value="{{ rid }}" {% if request.args.get('roll_id') == rid|string %}selected{% endif %}>{{ roll.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Ингредиент:</label>
+            <select name="ingredient_id" class="form-control">
+                <option value="">Все</option>
+                {% for ing in rolls.values()|map(attribute='name')|list %}{% endfor %}
+                {% for ing in ingredients %}
+                    <option value="{{ ing.id }}" {% if request.args.get('ingredient_id') == ing.id|string %}selected{% endif %}>{{ ing.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Операция:</label>
+            <select name="operation" class="form-control">
+                <option value="">Все</option>
+                <option value="Поставка" {% if request.args.get('operation') == 'Поставка' %}selected{% endif %}>Поставка</option>
+                <option value="Списание" {% if request.args.get('operation') == 'Списание' %}selected{% endif %}>Списание</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Статус заказа:</label>
+            <select name="order_status" class="form-control">
+                <option value="">Все</option>
+                <option value="Готовится" {% if request.args.get('order_status') == 'Готовится' %}selected{% endif %}>Готовится</option>
+                <option value="Сделан" {% if request.args.get('order_status') == 'Сделан' %}selected{% endif %}>Сделан</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label>Комментарий:</label>
+            <input type="text" name="comment" class="form-control" value="{{ request.args.get('comment', '') }}">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary">Показать</button>
+        </div>
+        <div class="col-md-3 align-self-end">
+            <a href="/accounting?date_from={{ date_from }}&date_to={{ date_to }}&roll_id={{ request.args.get('roll_id', '') }}&ingredient_id={{ request.args.get('ingredient_id', '') }}&operation={{ request.args.get('operation', '') }}&order_status={{ request.args.get('order_status', '') }}&comment={{ request.args.get('comment', '') }}&export=1" class="btn btn-1c btn-lg" style="margin-top:2px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-excel" viewBox="0 0 16 16" style="vertical-align:middle;margin-right:6px;"><path d="M5.884 6.68a.5.5 0 0 1 .09.638L4.383 9l1.591 1.682a.5.5 0 1 1-.746.664L3.5 9.753l-1.728 1.593a.5.5 0 1 1-.744-.664L2.617 9 .884 7.318a.5.5 0 1 1 .744-.664L3.5 8.247l1.728-1.593a.5.5 0 0 1 .656.026z"/><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3.5-2V4a1 1 0 0 0 1 1h1.5L10.5 2.5zM4 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5.5H11a2 2 0 0 1-2-2V1H4z"/></svg>
+                Выгрузить в Excel
+            </a>
+        </div>
+    </div>
+</form>
+{% if session['role'] in ['accountant', 'owner', 'admin'] %}
+<div class="mb-3">
+    <a href="/download_backups" class="btn btn-1c btn-lg" style="background:#1976d2;color:#fff;font-weight:bold;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-zip" viewBox="0 0 16 16" style="vertical-align:middle;margin-right:6px;"><path d="M6.5 7h1v1h-1V7zm0 2h1v1h-1V9zm0 2h1v1h-1v-1z"/><path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3.5-2V4a1 1 0 0 0 1 1h1.5L10.5 2.5zM4 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5.5H11a2 2 0 0 1-2-2V1H4z"/></svg>
+        Скачать все бэкапы (zip)
+    </a>
+</div>
+{% endif %}
+<h4>Суммарные показатели</h4>
+<ul>
+    <li>Поступления (продажи): <b>{{ total_income }}</b> сом</li>
+    <li>Себестоимость реализованного: <b>{{ total_cost }}</b> сом</li>
+    <li>Поставки (всего): <b>{{ total_stock_in }}</b> сом</li>
+    <li>Списания (всего): <b>{{ total_stock_out }}</b> сом</li>
+    <li>Зарплата сотрудникам: <b>{{ salary }}</b> сом</li>
+    <li>Аренда помещения: <b>{{ rent }}</b> сом</li>
+    <li>Прибыль: <b>{{ total_income - total_cost - salary - rent }}</b> сом</li>
+</ul>
+<h4>Остатки по ингредиентам</h4>
+<div class="table-responsive">
+<table class="table-1c">
+    <thead>
+        <tr>
+            <th>ID (Название)</th>
+            <th class="num">Остаток</th>
+            <th>Ед. изм.</th>
+            <th class="num">Цена за ед.</th>
+            <th class="num">Сумма на складе</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% set total_stock_value = 0 %}
+    {% for ing in ingredients %}
+        {% set stock_value = (ing.quantity or 0) * (ing.price_per_unit or 0) %}
+        {% set total_stock_value = total_stock_value + stock_value %}
+        <tr>
+            <td>{{ ing.id }} ({{ ing.name }})</td>
+            <td class="num">{{ ing.quantity }}</td>
+            <td>{{ ing.unit }}</td>
+            <td class="num">{{ ing.price_per_unit }}</td>
+            <td class="num">{{ stock_value|round(2) }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <th colspan="4" class="text-end">Итого на складе:</th>
+            <th class="num">{{ total_stock_value|round(2) }}</th>
+        </tr>
+    </tfoot>
+</table>
+</div>
+<form method="post" class="mb-4">
+    <input type="hidden" name="set_expenses" value="1">
+    <div class="row">
+        <div class="col-md-2">
+            <label>Зарплата (сом/мес):</label>
+            <input type="number" step="0.01" name="salary" class="form-control" value="{{ salary }}">
+        </div>
+        <div class="col-md-2">
+            <label>Аренда (сом/мес):</label>
+            <input type="number" step="0.01" name="rent" class="form-control" value="{{ rent }}">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-success">Сохранить расходы</button>
+        </div>
+    </div>
+</form>
+<h4>Роллы (себестоимость и продажная цена)</h4>
+<table class="table-1c">
+    <thead>
+        <tr>
+            <th>ID (Название)</th>
+            <th>Себестоимость</th>
+            <th>Продажная цена</th>
+            <th>Изменить цену</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for roll_id, roll in rolls.items() %}
+        <tr>
+            <td>{{ roll_id }} ({{ roll.name }})</td>
+            <td>{{ roll.cost }}</td>
+            <td>{{ roll.sale_price }}</td>
+            <td>
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="set_price" value="1">
+                    <input type="hidden" name="roll_id" value="{{ roll_id }}">
+                    <input type="number" step="0.01" name="sale_price" value="{{ roll.sale_price }}" style="width:90px;">
+                    <button type="submit" class="btn btn-sm btn-primary">Сохранить</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<h4>Заказы {% if request.args.get('roll_id') or request.args.get('order_status') or request.args.get('comment') %}<span class="badge bg-info">Фильтр</span>{% endif %}</h4>
+<table class="table-1c">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>ID (Ролл)</th>
+            <th>Кол-во</th>
+            <th>Сумма (продажа)</th>
+            <th>Себестоимость</th>
+            <th>Статус</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in orders %}
+        <tr>
+            <td>{{ order.order_time }}</td>
+            <td>{{ order.roll_id }} ({{ rolls[order.roll_id].name if order.roll_id in rolls else order.roll_id }})</td>
+            <td>{{ order.quantity }}</td>
+            <td>{{ (rolls[order.roll_id].sale_price * order.quantity) if order.roll_id in rolls else '' }}</td>
+            <td>{{ (rolls[order.roll_id].cost * order.quantity) if order.roll_id in rolls else '' }}</td>
+            <td>{{ order.status if order.status else '' }}</td>
+            <td>{{ order.comment if order.comment else '' }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<h4>Поставки {% if request.args.get('ingredient_id') or request.args.get('operation') or request.args.get('comment') %}<span class="badge bg-info">Фильтр</span>{% endif %}</h4>
+<table class="table-1c">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>ID (Ингредиент)</th>
+            <th>Количество</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for op in stock_in %}
+        <tr>
+            <td>{{ op.date }}</td>
+            <td>{% set ing = ingredients|selectattr('id', 'equalto', op.ingredient_id)|first %}{{ op.ingredient_id }} ({{ ing.name if ing else op.ingredient_id }})</td>
+            <td>{{ op.amount }}</td>
+            <td>{{ op.comment }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<h4>Списания {% if request.args.get('ingredient_id') or request.args.get('operation') or request.args.get('comment') %}<span class="badge bg-info">Фильтр</span>{% endif %}</h4>
+<table class="table-1c">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>ID (Ингредиент)</th>
+            <th>Количество</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for op in stock_out %}
+        <tr>
+            <td>{{ op.date }}</td>
+            <td>{% set ing = ingredients|selectattr('id', 'equalto', op.ingredient_id)|first %}{{ op.ingredient_id }} ({{ ing.name if ing else op.ingredient_id }})</td>
+            <td>{{ op.amount }}</td>
+            <td>{{ op.comment }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

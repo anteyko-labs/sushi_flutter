@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Добавить новый ролл с составом</h2>
+<form method="post">
+    <div class="mb-3">
+        <label>Название ролла:</label>
+        <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+        <label>Продажная цена (необязательно):</label>
+        <input type="number" step="0.01" name="sale_price" class="form-control">
+    </div>
+    <h4>Состав ролла</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Ингредиент</th>
+                <th>Количество на 1 ролл</th>
+                <th>Ед. изм.</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for ing in ingredients %}
+            <tr>
+                <td>{{ ing.name }}</td>
+                <td><input type="number" step="0.001" name="ingredient_{{ ing.id }}" class="form-control" placeholder="0"></td>
+                <td>{{ ing.unit }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-primary">Создать ролл</button>
+    <a href="/rolls" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %} 

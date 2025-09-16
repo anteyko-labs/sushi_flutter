@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>История действий (аудит)</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Дата/время</th>
+            <th>Действие</th>
+            <th>Объект</th>
+            <th>Название</th>
+            <th>Детали</th>
+            <th>Роль</th>
+            <th>Комментарий</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in history %}
+        <tr>
+            <td>{{ row.datetime }}</td>
+            <td>{{ row.action }}</td>
+            <td>{{ row.object_type }}</td>
+            <td>{{ row.object_name }}</td>
+            <td>{{ row.details }}</td>
+            <td>{{ row.role }}</td>
+            <td>{{ row.comment }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %} 

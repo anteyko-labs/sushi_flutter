@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Учет заказов суши</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        /* Улучшения для мобильных таблиц */
+        @media (max-width: 768px) {
+            .table-responsive { margin-bottom: 1rem; }
+            table.table { font-size: 0.95rem; }
+            .navbar .navbar-text { display: none; }
+            .navbar-nav { flex-direction: column; }
+            .navbar-nav .nav-link { padding-left: 0.5rem; }
+        }
+        /* Уменьшить отступы для мобильных форм */
+        @media (max-width: 576px) {
+            .form-control, .btn { font-size: 1rem; }
+            h1, h2, h3, h4 { font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+{% if session['role'] in ['accountant', 'owner'] %}
+<div style="position: absolute; left: 50%; top: 10px; transform: translateX(-50%); z-index: 1000; text-align: center; width: 340px;">
+    <div style="font-family: monospace, 'Arial Narrow', Arial; font-size: 2.1em; font-weight: bold; letter-spacing: 2px; color: #1a237e; text-shadow: 1px 1px 2px #bfc6e0; line-height: 1;">anteyko 7c</div>
+    <div style="font-family: monospace, 'Arial Narrow', Arial; font-size: 0.95em; color: #888; letter-spacing: 1px; margin-top: 2px;">system</div>
+</div>
+{% endif %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">Суши-учет</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Переключить навигацию">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if session['role'] == 'chef' %}
+                    <li class="nav-item"><a class="nav-link" href="/ingredients">Ингредиенты</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/rolls">Роллы</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/sets">Сеты</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/orders">Заказы</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/stock">Поставки/Списания</a></li>
+                {% elif session['role'] == 'staff' %}
+                    <li class="nav-item"><a class="nav-link" href="/sets">Сеты</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/orders">Заказы</a></li>
+                {% elif session['role'] == 'accountant' %}
+                    <li class="nav-item"><a class="nav-link" href="/accounting">Бухгалтерия</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analytics">Аналитика</a></li>
+                {% elif session['role'] == 'owner' %}
+                    <li class="nav-item"><a class="nav-link" href="/accounting">Бухгалтерия</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/analytics">Аналитика</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/history">История</a></li>
+                {% endif %}
+            </ul>
+            {% if session['role'] %}
+                <span class="navbar-text me-3">Роль: {{ 'Шеф' if session['role']=='chef' else 'Сотрудник' }}</span>
+                <a href="/logout" class="btn btn-outline-secondary btn-sm">Выйти</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+<!-- Bootstrap JS bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+  /* Явно показываем бургер на всех устройствах до 992px */
+  @media (max-width: 991.98px) {
+    .navbar-toggler { display: block !important; }
+    .navbar-collapse { width: 100%; }
+  }
+/* 1С-стиль для бухгалтерии */
+.table-1c {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+  font-size: 1.04em;
+}
+.table-1c th, .table-1c td {
+  border: 1.5px solid #e0c97f;
+  padding: 6px 10px;
+}
+.table-1c th {
+  background: #fffbe6;
+  color: #222;
+  font-weight: bold;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.table-1c td.num, .table-1c th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.table-1c tfoot th, .table-1c tfoot td {
+  background: #fff7b2;
+  font-weight: bold;
+  font-size: 1.08em;
+  color: #222;
+}
+.table-1c tr:hover td {
+  background: #f7f3d7;
+}
+.btn-1c {
+  background: #FFD700;
+  color: #222;
+  font-weight: bold;
+  border: 1.5px solid #e0c97f;
+  border-radius: 4px;
+  box-shadow: none;
+}
+.btn-1c:hover, .btn-1c:focus {
+  background: #ffe066;
+  color: #111;
+  border-color: #e0c97f;
+}
+.badge.bg-info {
+  background: #ffe066 !important;
+  color: #222 !important;
+  font-weight: bold;
+}
+</style>
+</body>
+</html> 
